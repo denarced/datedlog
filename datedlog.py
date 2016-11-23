@@ -47,7 +47,8 @@ class LogFile():
     def close(self):
         self.fp.close()
 
-def logFilesWithMinimumTimestamps(logFiles):
+
+def logFileWithMinimumTimestamp(logFiles):
     minimum = None
     for each in logFiles:
         if minimum is None:
@@ -57,25 +58,30 @@ def logFilesWithMinimumTimestamps(logFiles):
     return minimum
 
 
-def appendDates(lines):
+def appendDates(lines, prevLines):
     match = re.match(LogFile.TIME_RE, lines[0])
     assert match, "Oops, the first line should always contain the timestamp"
     outf = open(match.group(1)[0:10] + '.log', 'a')
     for each in lines:
+        # skip duplicates
+        if each in prevLines:
+            continue
         outf.write(each)
 
 
 def main(logFiles):
+    prevLines = []
     while logFiles:
-        minimum = logFilesWithMinimumTimestamps(logFiles)
+        minimum = logFileWithMinimumTimestamp(logFiles)
         lines = minimum.read()
-        appendDates(lines)
+        appendDates(lines, prevLines)
+        prevLines = lines
         if not minimum.hasMore():
             logFiles.remove(minimum)
 
 if __name__ == '__main__':
-    # Create a list of LogFile objects and initialize each of them in such a way
-    # that the first line with a timestamp is read. If any file begins with
+    # Create a list of LogFile objects and initialize each of them in such a
+    # way that the first line with a timestamp is read. If any file begins with
     # timestampless lines, they are ignored.
     logFiles = []
     for each in sys.argv[1:]:
